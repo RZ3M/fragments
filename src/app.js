@@ -41,7 +41,7 @@ app.get('/', (req, res) => {
     status: 'ok',
     author,
     // TODO: change this to use your GitHub username
-    githubUrl: 'https://github.com/humphd/fragments',
+    githubUrl: 'https://github.com/RZ3M/fragments',
     version,
   });
 });
