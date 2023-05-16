@@ -12,5 +12,8 @@
     "url": "git+https://github.com/RZ3M/fragments"
   },
   "author": "Jack Ma",
-  "license": "UNLICENSED"
+  "license": "UNLICENSED",
+  "devDependencies": {
+    "prettier": "2.8.8"
+  }
 }
