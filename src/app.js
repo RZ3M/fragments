@@ -1,11 +1,9 @@
-// src/app.js
-
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const compression = require('compression');
 const passport = require('passport');
-const authenticate = require('./authentication');
+const authenticate = require('./authorization/index');
 
 // version and author from our package.json file
 // const { version, author } = require('../package.json');
