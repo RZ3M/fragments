@@ -7,9 +7,13 @@
   "editor.codeActionsOnSave": {
     "source.fixAll": true
   },
+  "prettier.prettierPath": "./node_modules/prettier",
   "files.eol": "\n",
   "files.insertFinalNewline": true,
   "[dotenv]": {
     "editor.defaultFormatter": "foxundermoon.shell-format"
+  },
+  "[javascript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
   }
 }
