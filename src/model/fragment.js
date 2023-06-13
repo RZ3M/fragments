@@ -39,7 +39,6 @@ class Fragment {
     this.type = type;
     this.size = size || 0;
 
-    logger.info(`New fragment created with ID of: ${this.id}`);
     logger.debug(`Fragment details: ${JSON.stringify(this)}`);
   }
 
