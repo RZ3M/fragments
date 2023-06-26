@@ -1,6 +1,5 @@
-# Use node version 18.13.0
-FROM node:18.13.0
-
+# Stage 0: Install dependencies
+FROM node:18-alpine3.17@sha256:19892542dd80e33aec50a51619ab36db0921de240c6a4ff6024d801f84881293 AS dependencies
 LABEL maintainer="Jack Ma <jma140@myseneca.ca>"
 LABEL description="Fragments node.js microservice"
 
