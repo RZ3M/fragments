@@ -103,6 +103,7 @@ class Fragment {
     if (!Buffer.isBuffer(data)) {
       throw new Error('Data is not a Buffer');
     }
+    this.updated = new Date().toISOString();
     this.size = data.length;
     await this.save();
     logger.info(`Fragment ${this.id} data set`);
