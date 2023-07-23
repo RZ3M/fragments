@@ -7,22 +7,19 @@ module.exports = async (req, res) => {
   if (!Buffer.isBuffer(req.body)) {
     logger.warn('body does not contain data');
     return res.status(415).json(response.createErrorResponse(415, 'Unsupported data type.'));
-  } else {
+  }
+  try {
     const fragment = new Fragment({
       ownerId: req.user,
       type: req.get('Content-Type'),
     });
     await fragment.setData(req.body);
+    await fragment.save();
 
     const location = req.protocol + '://' + url + ':8080/v1' + req.url + '/' + fragment.id;
-    res
-      .set({ Location: location })
-      .status(201)
-      .json(
-        response.createSuccessResponse({
-          fragment: fragment,
-        })
-      );
+    res.set({ Location: location }).status(201).json(response.createSuccessResponse({ fragment }));
     logger.info({ fragment: fragment }, `Fragment have been posted successfully`);
+  } catch (error) {
+    res.status(404).json(response.createErrorResponse(404, 'Unable to POST the fragment'));
   }
 };
