@@ -6,9 +6,6 @@ const wait = async (ms = 10) => new Promise((resolve) => setTimeout(resolve, ms)
 
 const validTypes = [
   `text/plain`,
-  /*
-   Currently, only text/plain is supported. Others will be added later.
-
   `text/markdown`,
   `text/html`,
   `application/json`,
@@ -16,7 +13,6 @@ const validTypes = [
   `image/jpeg`,
   `image/webp`,
   `image/gif`,
-  */
 ];
 
 describe('Fragment class', () => {
@@ -131,7 +127,7 @@ describe('Fragment class', () => {
     });
   });
 
-  describe('mimeType, isText', () => {
+  describe('mimeType, isText, isJSON', () => {
     test('mimeType returns the mime type without charset', () => {
       const fragment = new Fragment({
         ownerId: '1234',
@@ -157,6 +153,16 @@ describe('Fragment class', () => {
       });
       expect(fragment.isText).toBe(true);
     });
+
+    test('isJSON return expected results', () => {
+      // Text fragment
+      const fragment = new Fragment({
+        ownerId: '1234',
+        type: 'application/json',
+        size: 0,
+      });
+      expect(fragment.isJSON).toBe(true);
+    });
   });
 
   describe('formats', () => {
@@ -167,6 +173,38 @@ describe('Fragment class', () => {
         size: 0,
       });
       expect(fragment.formats).toEqual(['text/plain']);
+    });
+    test('formats returns the expected result for markdown', () => {
+      const fragment = new Fragment({
+        ownerId: '1234',
+        type: 'text/markdown',
+        size: 0,
+      });
+      expect(fragment.formats).toEqual(['text/markdown', 'text/html', 'text/plain']);
+    });
+    test('formats returns the expected result for html', () => {
+      const fragment = new Fragment({
+        ownerId: '1234',
+        type: 'text/html',
+        size: 0,
+      });
+      expect(fragment.formats).toEqual(['text/html', 'text/plain']);
+    });
+    test('formats returns the expected result for json', () => {
+      const fragment = new Fragment({
+        ownerId: '1234',
+        type: 'application/json',
+        size: 0,
+      });
+      expect(fragment.formats).toEqual(['application/json', 'text/plain']);
+    });
+    test('formats returns the expected result for images', () => {
+      const fragment = new Fragment({
+        ownerId: '1234',
+        type: 'image/png',
+        size: 0,
+      });
+      expect(fragment.formats).toEqual(['image/png', 'image/jpeg', 'image/webp', 'image/gif']);
     });
   });
 
@@ -252,6 +290,32 @@ describe('Fragment class', () => {
 
       await Fragment.delete('1234', fragment.id);
       expect(() => Fragment.byId('1234', fragment.id)).rejects.toThrow();
+    });
+  });
+
+  describe('mimeLookup', () => {
+    test('mimeLookup() returns correct extension', () => {
+      expect(Fragment.mimeLookup('.txt')).toEqual('text/plain');
+      expect(Fragment.mimeLookup('.md')).toEqual('text/markdown');
+      expect(Fragment.mimeLookup('.html')).toEqual('text/html');
+      expect(Fragment.mimeLookup('.json')).toEqual('application/json');
+      expect(Fragment.mimeLookup('.png')).toEqual('image/png');
+      expect(Fragment.mimeLookup('.webp')).toEqual('image/webp');
+      expect(Fragment.mimeLookup('.gif')).toEqual('image/gif');
+      expect(Fragment.mimeLookup('.jpg')).toEqual('image/jpeg');
+    });
+  });
+
+  // removed temporarily
+  describe('convertText', () => {
+    test('a fragment can be deleted', async () => {
+      const fragment = new Fragment({ ownerId: '1234', type: 'text/markdown', size: 0 });
+      await fragment.save();
+      const sampleData = Buffer.from('# Heading level 1');
+      await fragment.setData(sampleData);
+      const result = await fragment.convertText(sampleData, '.html');
+
+      expect(result).toEqual('<h1>Heading level 1</h1>\n');
     });
   });
 });
