@@ -3,6 +3,8 @@
 const { randomUUID } = require('crypto');
 // Use https://www.npmjs.com/package/content-type to create/parse Content-Type headers
 const contentType = require('content-type');
+const sharp = require('sharp');
+const md = require('markdown-it')();
 const logger = require('../logger');
 // Functions for working with fragment metadata/data using our DB
 const {
@@ -106,7 +108,7 @@ class Fragment {
     this.updated = new Date().toISOString();
     this.size = data.length;
     await this.save();
-    logger.info(`Fragment ${this.id} data set`);
+    logger.debug(`Fragment ${this.id} data set`);
 
     return await writeFragmentData(this.ownerId, this.id, data);
   }
@@ -130,34 +132,18 @@ class Fragment {
   }
 
   /**
+   * Returns true if this fragment is a JSON mime type
+   * @returns {boolean} true if fragment's type is application/json
+   */
+  get isJSON() {
+    return this.mimeType === 'application/json';
+  }
+
+  /**
    * Returns the formats into which this fragment type can be converted
    * @returns {Array<string>} list of supported mime types
    */
   get formats() {
-    // let formats = [];
-    // switch (this.mimeType) {
-    //   case 'text/plain':
-    //     formats = ['.txt'];
-    //     break;
-    //   case 'text/markdown':
-    //     formats = ['.md', '.html', '.txt'];
-    //     break;
-    //   case 'text/html':
-    //     formats = ['.html', '.txt'];
-    //     break;
-    //   case 'application/json':
-    //     formats = ['.json', '.txt'];
-    //     break;
-    //   case 'image/png':
-    //   case 'image/jpeg':
-    //   case 'image/webp':
-    //   case 'image/gif':
-    //     formats = ['.png', '.jpg', '.webp', '.gif'];
-    //     break;
-    // }
-
-    // return formats;
-
     let formats = [];
     switch (this.mimeType) {
       case 'text/plain':
@@ -202,6 +188,93 @@ class Fragment {
     ];
 
     return supportedType.includes(value);
+  }
+
+  /**
+   * Return content type given extension
+   * @param {string} extension an extension value (e.g., '.txt' or '.html')
+   * @returns {string} the typename is returned (i.e., text/plain)
+   */
+  static mimeLookup(extension) {
+    switch (extension) {
+      case '.txt':
+        return 'text/plain';
+      case '.md':
+        return 'text/markdown';
+      case '.html':
+        return 'text/html';
+      case '.json':
+        return 'application/json';
+      case '.png':
+      case '.webp':
+      case '.gif':
+        return `image/${extension.substring(1)}`;
+      case '.jpg':
+        return 'image/jpeg';
+      default:
+        return 'unsupported';
+    }
+  }
+
+  async convertText(data, extension) {
+    var result;
+    if (extension === '.txt') {
+      if (this.isJSON) {
+        result = JSON.parse(data);
+      } else {
+        result = data;
+      }
+    } else if (extension == '.html') {
+      if (this.mimeType === 'text/markdown') {
+        result = md.render(data.toString());
+      }
+    }
+
+    return result;
+  }
+
+  async convertImage(data, extension) {
+    var result;
+    try {
+      const image = sharp(data);
+      switch (extension) {
+        case '.png':
+          image.png();
+          break;
+        case '.jpg':
+        case '.jpeg':
+          image.jpeg();
+          break;
+        case '.webp':
+          image.webp();
+          break;
+        case '.gif':
+          image.gif();
+          break;
+      }
+      result = await image.toBuffer();
+    } catch (error) {
+      logger.warn('Image conversion failed: ' + error.message);
+    }
+
+    return result;
+  }
+
+  /**
+   * Returns the data converted to the desired type
+   * @param {Buffer} data fragment data to be converted
+   * @param {string} extension the extension type to convert to (desired type)
+   * @returns {Buffer} converted fragment data
+   */
+  async convertType(data, extension) {
+    // is text or json
+    if (this.isText || this.isJSON) {
+      return this.convertText(data, extension);
+    }
+    // is image
+    else {
+      return this.convertImage(data, extension);
+    }
   }
 }
 
