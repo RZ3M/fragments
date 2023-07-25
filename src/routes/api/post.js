@@ -16,7 +16,7 @@ module.exports = async (req, res) => {
     await fragment.setData(req.body);
     await fragment.save();
 
-    const location = req.protocol + '://' + url + ':8080/v1' + req.url + '/' + fragment.id;
+    const location = `${url}/v1/fragments/${fragment.id}`;
     res.set({ Location: location }).status(201).json(response.createSuccessResponse({ fragment }));
     logger.info({ fragment: fragment }, `Fragment have been posted successfully`);
   } catch (error) {
