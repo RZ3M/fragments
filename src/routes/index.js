@@ -1,4 +1,5 @@
 const express = require('express');
+const { hostname } = require('os');
 
 // version and author from package.json
 const { version, author } = require('../../package.json');
@@ -26,12 +27,13 @@ router.get('/', (req, res) => {
   // Client's shouldn't cache this response (always request it fresh)
   res.setHeader('Cache-Control', 'no-cache');
   // Send a 200 'OK' response
-
   res.status(200).json(
     response.createSuccessResponse({
       author,
       githubUrl: 'https://github.com/RZ3M/fragments',
       version,
+      // Include the hostname in the response
+      hostname: hostname(),
     })
   );
 });
