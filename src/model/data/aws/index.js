@@ -1,7 +1,7 @@
 const s3Client = require('./s3Client');
 const ddbDocClient = require('./ddbDocClient');
 const logger = require('../../../logger');
-const { PutCommand, GetCommand, QueryCommand } = require('@aws-sdk/lib-dynamodb');
+const { PutCommand, GetCommand, QueryCommand, DeleteCommand } = require('@aws-sdk/lib-dynamodb');
 const { PutObjectCommand, GetObjectCommand, DeleteObjectCommand } = require('@aws-sdk/client-s3');
 
 // Writes a fragment to DynamoDB. Returns a Promise.
@@ -175,7 +175,7 @@ async function deleteFragment(ownerId, id) {
   // Create a delete Object command to send to S3
   const commandS3 = new DeleteObjectCommand(paramsS3);
   // Create a delete Object command to send to S3
-  const commandDDB = new DeleteObjectCommand(paramsDDB);
+  const commandDDB = new DeleteCommand(paramsDDB);
 
   try {
     // send the command
