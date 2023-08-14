@@ -1,5 +1,8 @@
 const request = require('supertest');
+const fs = require('fs');
 const app = require('../../src/app');
+const hash = require('../../src/hash');
+const { listFragments } = require('../../src/model/data');
 
 describe('GET /v1/fragments', () => {
   // If the request is missing the Authorization header, it should be forbidden
@@ -16,8 +19,6 @@ describe('GET /v1/fragments', () => {
     expect(res.body.status).toBe('ok');
     expect(Array.isArray(res.body.fragments)).toBe(true);
   });
-
-  // TODO: we'll need to add tests to check the contents of the fragments array later
 
   test('invalid fragment ID for the GET request should give an appropriate error', async () => {
     const res = await request(app)
@@ -68,11 +69,107 @@ describe('GET /v1/fragments', () => {
     expect(res.statusCode).toBe(415);
   });
 
-  test('Get all fragments list of unauthenticated user (get?expand=1)', async () => {
+  test('successful conversion of text/markdown(.md) extension to .md', async () => {
+    const req = await request(app)
+      .post('/v1/fragments/')
+      .auth('user1@email.com', 'password1')
+      .send('# This is a markdown type fragment')
+      .set('Content-type', 'text/markdown');
+
+    const res = await request(app)
+      .get(`/v1/fragments/${req.body.fragment.id}.md`)
+      .auth('user1@email.com', 'password1');
+    expect(res.statusCode).toBe(200);
+    expect(res.text).toEqual('# This is a markdown type fragment');
+  });
+
+  test('GET by ID existing image file', async () => {
+    const req = await request(app)
+      .post('/v1/fragments/')
+      .auth('user1@email.com', 'password1')
+      .set('Content-type', 'image/jpeg')
+      .send(fs.readFileSync(`${__dirname}/img/grapes.jpg`));
+    expect(req.status).toBe(201);
+
+    const res = await request(app)
+      .get(`/v1/fragments/${req.body.fragment.id}`)
+      .auth('user1@email.com', 'password1');
+    expect(res.type).toBe('image/jpeg');
+    expect(res.statusCode).toBe(200);
+    expect(res.body).toEqual(Buffer.from(fs.readFileSync(`${__dirname}/img/grapes.jpg`)));
+  });
+
+  test('successful conversion of the existing jpg file to gif', async () => {
+    const req = await request(app)
+      .post('/v1/fragments/')
+      .auth('user1@email.com', 'password1')
+      .set('Content-type', 'image/jpeg')
+      .send(fs.readFileSync(`${__dirname}/img/grapes.jpg`));
+    expect(req.status).toBe(201);
+
+    const res = await request(app)
+      .get(`/v1/fragments/${req.body.fragment.id}.gif`)
+      .auth('user1@email.com', 'password1');
+    expect(res.statusCode).toBe(200);
+    expect(res.type).toBe('image/gif');
+  });
+
+  test('successful conversion of the existing jpg file to webp', async () => {
+    const req = await request(app)
+      .post('/v1/fragments/')
+      .auth('user1@email.com', 'password1')
+      .set('Content-type', 'image/jpeg')
+      .send(fs.readFileSync(`${__dirname}/img/grapes.jpg`));
+    expect(req.status).toBe(201);
+
+    const res = await request(app)
+      .get(`/v1/fragments/${req.body.fragment.id}.webp`)
+      .auth('user1@email.com', 'password1');
+    expect(res.statusCode).toBe(200);
+    expect(res.type).toBe('image/webp');
+  });
+
+  test('successful conversion of the existing jpg file to webp', async () => {
+    const req = await request(app)
+      .post('/v1/fragments/')
+      .auth('user1@email.com', 'password1')
+      .set('Content-type', 'image/jpeg')
+      .send(fs.readFileSync(`${__dirname}/img/grapes.jpg`));
+    expect(req.status).toBe(201);
+
+    const res = await request(app)
+      .get(`/v1/fragments/${req.body.fragment.id}.png`)
+      .auth('user1@email.com', 'password1');
+    expect(res.statusCode).toBe(200);
+    expect(res.type).toBe('image/png');
+  });
+
+  test('Get all fragments list of unauthenticated user GET /fragments/?expand=1', async () => {
     const res = await request(app)
       .get('/v1/fragments?expand=1')
       .auth('unauthenticated@email.com', 'password1');
     expect(res.statusCode).toBe(401);
+  });
+
+  test('authenticated user successfully GET /fragments/?expand=1', async () => {
+    await request(app)
+      .post('/v1/fragments')
+      .send('this is a testing fragment 1')
+      .set('Content-type', 'text/plain')
+      .auth('user1@email.com', 'password1');
+    await request(app)
+      .post('/v1/fragments')
+      .send('this is a testing fragment 2')
+      .set('Content-type', 'text/plain')
+      .auth('user1@email.com', 'password1');
+    var result = await listFragments(hash('user1@email.com'), 1);
+    const res = await request(app)
+      .get('/v1/fragments?expand=1')
+      .auth('user1@email.com', 'password1');
+
+    expect(res.statusCode).toBe(200);
+    expect(res.body.status).toBe('ok');
+    expect(res.body.fragments).toEqual(result);
   });
 
   test('Get fragments metadata by valid user ID', async () => {
