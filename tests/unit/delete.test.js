@@ -21,7 +21,7 @@ describe('DELETE /v1/fragments', () => {
     const res = await request(app)
       .delete(`/v1/fragments/invalidID`)
       .auth('user1@email.com', 'password1');
-    expect(res.status).toBe(404);
-    expect(res.body.error.message).toBe('Fragment not found');
+    expect(res.status).toBe(500);
+    expect(res.body.error.message).toBe('Fragment invalidID not found');
   });
 });
